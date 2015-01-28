@@ -6,7 +6,11 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.GridView;
+import android.widget.ImageView;
+
+import java.util.ArrayList;
 
 /**
  * Created by ElephantPC on 27/01/2015.
@@ -15,6 +19,7 @@ public class PhotoGalleryFragment extends Fragment {
     private static final String TAG = "PhotoGalleryFragment";
 
     GridView mGridView;
+    ArrayList<GalleryItem> mItems;
 
     @Override
     public void onCreate(Bundle savedInstanceState){
@@ -30,16 +35,51 @@ public class PhotoGalleryFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_photo_gallery, container, false);
 
         mGridView = (GridView)v.findViewById(R.id.gridView);
+        setupAdapter();
 
         return v;
     }
 
-    private class FetchItemsTask extends AsyncTask<Void, Void, Void> {
-        @Override
-        protected Void doInBackground(Void... params){
-            new FlickrFetchr().fetchItems();
-            return null;
+    void setupAdapter() {
+        if (getActivity() == null || mGridView == null) return;
+
+        if (mItems != null) {
+            mGridView.setAdapter(new GalleryItemAdapter(mItems));
+        } else {
+            mGridView.setAdapter(null);
         }
     }
 
+    private class FetchItemsTask extends AsyncTask<Void, Void, ArrayList<GalleryItem>> {
+        @Override
+        protected ArrayList<GalleryItem> doInBackground(Void... params){
+
+            return new FlickrFetchr().fetchItems();
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<GalleryItem> items){
+            mItems = items;
+            setupAdapter();
+        }
+    }
+
+    private class GalleryItemAdapter extends ArrayAdapter<GalleryItem> {
+        public GalleryItemAdapter(ArrayList<GalleryItem> items){
+            super(getActivity(), 0, items);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent){
+            if (convertView == null){
+                convertView = getActivity().getLayoutInflater()
+                        .inflate(R.layout.gallery_item, parent, false);
+            }
+
+            ImageView imageView = (ImageView)convertView.findViewById(R.id.gallery_item_imageView);
+            imageView.setImageResource(R.drawable.brian_up_close);
+
+            return convertView;
+        }
+    }
 }
